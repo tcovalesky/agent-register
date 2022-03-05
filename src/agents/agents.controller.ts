@@ -6,11 +6,17 @@ import {
   Param,
   Delete,
   Put,
+  UseGuards,
+  UsePipes,
+  ValidationPipe,
 } from '@nestjs/common';
+import { AuthGuard } from '../shared/guards/auth.guard';
 import { AgentsService } from './agents.service';
 import { CreateAgentDto } from './dto/create-agent.dto';
 import { UpdateAgentDto } from './dto/update-agent.dto';
 
+@UseGuards(AuthGuard)
+@UsePipes(ValidationPipe)
 @Controller('public/agents')
 export class AgentsController {
   constructor(private readonly agentsService: AgentsService) {}
