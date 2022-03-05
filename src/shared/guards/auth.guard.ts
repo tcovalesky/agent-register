@@ -1,5 +1,9 @@
-import { CanActivate, ExecutionContext, Injectable } from '@nestjs/common';
-import { Observable } from 'rxjs';
+import {
+  CanActivate,
+  ExecutionContext,
+  HttpException,
+  Injectable,
+} from '@nestjs/common';
 
 @Injectable()
 export class AuthGuard implements CanActivate {
@@ -8,8 +12,12 @@ export class AuthGuard implements CanActivate {
   }
 
   async validateRequest(context: ExecutionContext): Promise<boolean> {
-    const request = context.switchToHttp().getRequest();
-    console.log(request);
-    return true;
+    const query = context.switchToHttp().getRequest().query;
+
+    if (query.login && query.login === process.env.AUTH_TOKEN) {
+      return true;
+    } else {
+      throw new HttpException('Usuário não autenticado.', 401);
+    }
   }
 }
