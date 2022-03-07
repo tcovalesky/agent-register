@@ -99,6 +99,18 @@ describe('AppController (e2e)', () => {
     });
   });
 
+  it('/public/agents (POST login already exists)', () => {
+    return request(app.getHttpServer())
+      .post('/public/agents?login=correct-token')
+      .send(newUser)
+      .expect(422)
+      .expect({
+        statusCode: 422,
+        message: 'Login already registered',
+        error: 'Unprocessable Entity',
+      });
+  });
+
   it('/public/agents (GET)', () => {
     return request(app.getHttpServer())
       .get('/public/agents?login=correct-token')
