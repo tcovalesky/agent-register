@@ -33,16 +33,16 @@ export class AgentsController {
 
   @Get(':id')
   findOne(@Param('id') id: string) {
-    return this.agentsService.findOne(+id);
+    return this.agentsService.findOne(id);
   }
 
   @Put(':id')
   update(@Param('id') id: string, @Body() updateAgentDto: UpdateAgentDto) {
-    return this.agentsService.update(+id, updateAgentDto);
+    return this.agentsService.update(id, updateAgentDto);
   }
 
   @Delete(':id')
   remove(@Param('id') id: string) {
-    return this.agentsService.remove(+id);
+    return this.agentsService.remove(id);
   }
 }

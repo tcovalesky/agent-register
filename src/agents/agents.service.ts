@@ -1,26 +1,45 @@
 import { Injectable } from '@nestjs/common';
+import { InjectModel } from '@nestjs/mongoose';
 import { CreateAgentDto } from './dto/create-agent.dto';
 import { UpdateAgentDto } from './dto/update-agent.dto';
+import { Agent, AgentDocument } from './schemas/agent.schema';
+import { Model } from 'mongoose';
+import { AgentSerializer } from './views/user.serializer';
 
 @Injectable()
 export class AgentsService {
-  create(createAgentDto: CreateAgentDto) {
-    return 'This action adds a new agent';
+  constructor(
+    @InjectModel(Agent.name) private agentModel: Model<AgentDocument>,
+  ) {}
+
+  async create(createAgentDto: CreateAgentDto) {
+    const agent = await this.agentModel.create(createAgentDto);
+
+    return AgentSerializer.json(agent);
   }
 
-  findAll() {
-    return `This action returns all agents`;
+  async findAll() {
+    const agentDocuments = await this.agentModel.find().exec();
+    return agentDocuments.map((agent) => AgentSerializer.json(agent));
   }
 
-  findOne(id: number) {
-    return `This action returns a #${id} agent`;
+  async findOne(id: string) {
+    const agent = await this.agentModel
+      .findOne({ _id: id, deleted_at: undefined })
+      .exec();
+    return AgentSerializer.json(agent);
   }
 
-  update(id: number, updateAgentDto: UpdateAgentDto) {
-    return `This action updates a #${id} agent`;
+  async update(id: string, updateAgentDto: UpdateAgentDto) {
+    await this.agentModel.updateOne(
+      { _id: id, deleted_at: undefined },
+      updateAgentDto,
+    );
+    return this.findOne(id);
   }
 
-  remove(id: number) {
-    return `This action removes a #${id} agent`;
+  async remove(id: string) {
+    await this.agentModel.deleteOne({ _id: id }).exec();
+    return;
   }
 }
