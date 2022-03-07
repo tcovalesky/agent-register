@@ -13,7 +13,7 @@ Este serviço é responsável por gerenciar um registro de agentes.
 
 ## Testes
 
-No link https://www.getpostman.com/collections/5124510c30ea19481e18 é possível acessar uma collection da aplicação POSTMAN para a realização de testes.
+No link https://www.getpostman.com/collections/5124510c30ea19481e18 é possível acessar uma collection do POSTMAN para a realização de testes.
 
 Os testes automatizados estão implementados em sua maioria como testes fim a fim. Para executar os testes é necessário ter uma instância de um banco mongo executando.
 
