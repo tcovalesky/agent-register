@@ -1,4 +1,4 @@
-import { Injectable } from '@nestjs/common';
+import { Injectable, UnprocessableEntityException } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
 import { CreateAgentDto } from './dto/create-agent.dto';
 import { UpdateAgentDto } from './dto/update-agent.dto';
@@ -13,14 +13,18 @@ export class AgentsService {
   ) {}
 
   async create(createAgentDto: CreateAgentDto) {
+    if (await this.agentModel.findOne({ login: createAgentDto.login }).exec()) {
+      throw new UnprocessableEntityException('Login already registered');
+    }
+
     const agent = await this.agentModel.create(createAgentDto);
 
     return AgentSerializer.json(agent);
   }
 
   async findAll() {
-    const agentDocuments = await this.agentModel.find().exec();
-    return agentDocuments.map((agent) => AgentSerializer.json(agent));
+    const agents = await this.agentModel.find().exec();
+    return AgentSerializer.withArray(agents);
   }
 
   async findOne(id: string) {

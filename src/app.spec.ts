@@ -1,17 +1,26 @@
+import * as dotenv from 'dotenv';
+
+dotenv.config({ path: '.env.test' });
+
+import { MongoClient } from 'mongodb';
 import { Test, TestingModule } from '@nestjs/testing';
 import { INestApplication } from '@nestjs/common';
 import * as request from 'supertest';
-import { AppModule } from '../src/app.module';
-import { newUser, updatedUser } from './mocks/user.mocks';
+import * as mongoose from 'mongoose';
+import { AppModule } from './app.module';
+import { newUser, updatedUser } from '../test/mocks/user.mocks';
 
 describe('AppController (e2e)', () => {
-  let app: INestApplication;
+  let client, db, createdUserId, app: INestApplication;
+  const { password, ...newUserWithoutPassword } = newUser;
   const wrongTokenMessage = {
     statusCode: 401,
     message: 'Usuário não autenticado.',
   };
 
-  beforeAll(() => {
+  beforeAll(async () => {
+    client = await MongoClient.connect(process.env.MONGO_URI);
+    db = client.db();
     process.env.AUTH_TOKEN = 'correct-token';
   });
 
@@ -22,6 +31,13 @@ describe('AppController (e2e)', () => {
 
     app = moduleFixture.createNestApplication();
     await app.init();
+  });
+
+  afterAll(async () => {
+    await db.collection('agents').deleteMany();
+    await client.close();
+    await mongoose.disconnect();
+    await app.close();
   });
 
   it('/healthy (GET)', () => {
@@ -69,43 +85,45 @@ describe('AppController (e2e)', () => {
       .expect(wrongTokenMessage);
   });
 
-  it('/public/agents (POST)', () => {
-    return request(app.getHttpServer())
+  it('/public/agents (POST)', async () => {
+    const response = await request(app.getHttpServer())
       .post('/public/agents?login=correct-token')
       .send(newUser)
-      .expect(201)
-      .expect('This action adds a new agent');
+      .expect(201);
+
+    createdUserId = response.body.id;
+
+    expect(response.body).toStrictEqual({
+      ...newUserWithoutPassword,
+      id: createdUserId,
+    });
   });
 
   it('/public/agents (GET)', () => {
     return request(app.getHttpServer())
       .get('/public/agents?login=correct-token')
       .expect(200)
-      .expect('This action returns all agents');
+      .expect([{ ...newUserWithoutPassword, id: createdUserId }]);
   });
 
   it('/public/agents/{agentId} (PUT)', () => {
-    const agentId = '1234';
     return request(app.getHttpServer())
-      .put(`/public/agents/${agentId}?login=correct-token`)
+      .put(`/public/agents/${createdUserId}?login=correct-token`)
       .send(updatedUser)
       .expect(200)
-      .expect(`This action updates a #${agentId} agent`);
+      .expect({ ...updatedUser, id: createdUserId });
   });
 
   it('/public/agents/{agentId} (GET)', () => {
-    const agentId = '1234';
     return request(app.getHttpServer())
-      .get(`/public/agents/${agentId}?login=correct-token`)
+      .get(`/public/agents/${createdUserId}?login=correct-token`)
       .expect(200)
-      .expect(`This action returns a #${agentId} agent`);
+      .expect({ ...updatedUser, id: createdUserId });
   });
 
   it('/public/agents/{agentId} (DELETE)', () => {
-    const agentId = '1234';
     return request(app.getHttpServer())
-      .delete(`/public/agents/${agentId}?login=correct-token`)
-      .expect(200)
-      .expect(`This action removes a #${agentId} agent`);
+      .delete(`/public/agents/${createdUserId}?login=correct-token`)
+      .expect(200);
   });
 });

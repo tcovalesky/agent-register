@@ -29,4 +29,8 @@ export class AgentSerializer {
       },
     };
   }
+
+  static withArray(agents: AgentDocument[]) {
+    return agents.map((agent) => this.json(agent));
+  }
 }
